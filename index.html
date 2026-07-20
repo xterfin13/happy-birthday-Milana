@@ -839,6 +839,9 @@
       pauseBackgroundMusic();
       resetScene1();
       heartAnimationStarted = false; // Reset heart animation
+      scene2Started = false;
+      heartUI.classList.remove("show");
+heartCtx.clearRect(0, 0, heartCanvas.width, heartCanvas.height);
     });
 
     function heartPoint(t) {
@@ -1272,16 +1275,19 @@ const scale = Math.min(
       { title: "я выберу тебя", artist: "mapt0v", videoId: "Nnmp31PIEWQ" }
     ];
 
-    function startBackgroundMusic() {
-      if (!bgPlayerReady || !bgPlayer) return;
-      try {
-        bgPlayer.unMute();
-        bgPlayer.seekTo(backgroundTrack.syncStartSeconds, true);
-        bgPlayer.setVolume(BG_NORMAL_VOLUME);
-        bgPlayer.playVideo();
-      } catch (error) {}
-    }
+ function startBackgroundMusic() {
+    if (!bgPlayerReady || !bgPlayer) return;
 
+    try {
+        bgPlayer.unMute();
+        bgPlayer.setVolume(BG_NORMAL_VOLUME);
+
+        // Запускаем только если музыка сейчас не играет
+        if (bgPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
+            bgPlayer.playVideo();
+        }
+    } catch (error) {}
+}
     function pauseBackgroundMusic() {
       if (!bgPlayerReady || !bgPlayer) return;
       try {
