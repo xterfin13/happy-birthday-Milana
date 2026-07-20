@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Birthday Surprise</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Nunito:wght@400;700;900&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --pink: #ff56c4;
+      --pink-strong: #ff2f9d;
+      --violet: #d061ff;
+      --bg: #030303;
+      --panel: rgba(16, 8, 20, 0.95);
+      --panel-strong: rgba(24, 11, 31, 0.98);
+      --line: rgba(255, 145, 221, 0.32);
+      --text-soft: #ffe5f7;
+      --text-dim: #ffc7ea;
+      --shadow: 0 0 16px rgba(255, 86, 196, 0.9), 0 0 38px rgba(208, 97, 255, 0.55);
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      color: white;
+      font-family: "Nunito", Arial, sans-serif;
+    }
+
+    body {
+      background: #000;
+    }
+
+    .screen,
+    .overlay {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #scene1 {
+      z-index: 1;
+    }
+
+    #centerWord {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-family: Arial, sans-serif;
+      font-size: clamp(62px, 10vw, 142px);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      color: var(--pink);
+      text-shadow:
+        0 0 12px var(--pink),
+        0 0 26px var(--pink-strong),
+        0 0 70px var(--pink-strong);
+      animation: wordPulse 2.8s infinite;
+      z-index: 3;
+      user-select: none;
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+
+    #centerWord.hide {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.92);
+      pointer-events: none;
+    }
+
+    #centerWord.heartWord {
+      letter-spacing: 0;
+      font-size: clamp(86px, 16vw, 220px);
+      color: #ff70d6;
+      text-shadow:
+        0 0 12px #ff70d6,
+        0 0 30px #ff2fb1,
+        0 0 90px #ff2fb1;
+    }
+
+    @keyframes wordPulse {
+      50% {
+        transform: translate(-50%, -50%) scale(1.06);
+      }
+    }
+
+    #nextMain {
+      position: absolute;
+      left: 50%;
+      bottom: -140px;
+      transform: translateX(-50%);
+      padding: 18px 48px;
+      border: none;
+      border-radius: 60px;
+      background: linear-gradient(45deg, #ff2b7a, #ff5fd2);
+      color: white;
+      font-size: 24px;
+      font-weight: 900;
+      font-family: "Nunito", Arial, sans-serif;
+      cursor: pointer;
+      box-shadow:
+        0 0 20px #ff2b7a,
+        0 0 60px #ff2b7a;
+      opacity: 0;
+      z-index: 5;
+      transition: opacity 0.8s ease, bottom 0.8s ease, transform 0.25s ease;
+    }
+
+    #nextMain.show {
+      bottom: 55px;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #nextMain:hover {
+      transform: translateX(-50%) scale(1.03);
+    }
+
+    #scene2 {
+      z-index: 20;
+      background: #000;
+      display: none;
+    }
+
+    #scene2.show {
+      display: block;
+    }
+
+    #phraseRainCanvas {
+      z-index: 21;
+      opacity: 0.62;
+    }
+
+    #heartCanvas {
+      z-index: 22;
+    }
+
+    .softGlow {
+      position: absolute;
+      inset: auto 50% 9vh auto;
+      transform: translateX(50%);
+      width: min(70vw, 520px);
+      height: min(70vw, 520px);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 55, 170, 0.12), transparent 65%);
+      filter: blur(24px);
+      z-index: 22;
+      pointer-events: none;
+    }
+
+    #heartUI {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    #heartUI.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #smileBtn {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 18px;
+      background: rgba(18, 8, 18, 0.8);
+      color: white;
+      padding: 10px 14px;
+      min-width: 150px;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      text-align: left;
+      backdrop-filter: blur(8px);
+    }
+
+    #smileBtn span {
+      display: block;
+      font-size: 15px;
+      font-weight: 800;
+      color: #ffd7f2;
+    }
+
+    #smileHint {
+      position: absolute;
+      top: 92px;
+      left: 18px;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(255, 56, 160, 0.18);
+      border: 1px solid rgba(255, 140, 220, 0.35);
+      color: #ffe7f8;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
+      font-size: 14px;
+    }
+
+    #smileHint.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #heartButtons {
+      position: absolute;
+      right: clamp(18px, 5vw, 60px);
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: stretch;
+      width: min(34vw, 290px);
+      min-width: 230px;
+    }
+
+    .actionBtn,
+    .backBtn,
+    .cornerBtn,
+    .musicAction,
+    .trackBtn {
+      border: none;
+      cursor: pointer;
+      font-family: "Nunito", Arial, sans-serif;
+      color: white;
+      transition: transform 0.25s ease, filter 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+    }
+
+    .actionBtn,
+    .backBtn,
+    .cornerBtn,
+    .musicAction {
+      border-radius: 999px;
+      padding: 16px 22px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      background: linear-gradient(45deg, rgba(255, 34, 128, 0.95), rgba(215, 95, 255, 0.95));
+      box-shadow: 0 0 18px rgba(255, 56, 160, 0.72), 0 0 46px rgba(197, 94, 255, 0.4);
+    }
+
+    .actionBtn:hover,
+    .backBtn:hover,
+    .cornerBtn:hover,
+    .musicAction:hover,
+    .trackBtn:hover {
+      transform: scale(1.03);
+      filter: brightness(1.08);
+    }
+
+    .actionBtn {
+      font-size: 18px;
+    }
+
+    .overlay {
+      z-index: 50;
+      background:
+        radial-gradient(circle at center, rgba(255, 58, 162, 0.12), transparent 30%),
+        rgba(0, 0, 0, 0.95);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+    }
+
+    .overlay.show {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition: opacity 0.3s ease;
+    }
+
+    .backBtn {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      z-index: 3;
+      padding: 12px 20px;
+      font-size: 16px;
+    }
+
+    .cornerBtn {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 90;
+      padding: 12px 20px;
+      font-size: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition:
+        opacity 0.28s ease,
+        transform 0.25s ease,
+        filter 0.25s ease;
+    }
+
+    .cornerBtn.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #cardPanel,
+    #wishPanel,
+    #musicPanel {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(90vw, 940px);
+      padding: clamp(24px, 4vw, 42px);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 145, 221, 0.35);
+      background:
+        linear-gradient(180deg, rgba(26, 9, 33, 0.96), rgba(10, 5, 15, 0.96));
+      box-shadow: 0 0 28px rgba(255, 65, 170, 0.25), 0 0 90px rgba(208, 97, 255, 0.18);
+      text-align: center;
+      opacity: 0;
+      transform: translate(-50%, -46%) scale(0.94);
+      transition: transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
+    }
+
+    #cardPanel,
+    #wishPanel {
+      max-width: 760px;
+    }
+
+    .overlay.show #cardPanel,
+    .overlay.show #wishPanel,
+    .overlay.show #musicPanel {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    #cardPanel h2,
+    #wishPanel h2,
+    #musicPanel h2 {
+      font-size: clamp(28px, 5vw, 46px);
+      color: #ffd9f3;
+      text-shadow: 0 0 14px rgba(255, 117, 207, 0.9);
+      margin-bottom: 16px;
+      font-family: "Great Vibes", cursive;
+      font-weight: 400;
+      letter-spacing: 0.03em;
+    }
+
+    #cardPanel p {
+      font-size: clamp(16px, 2.2vw, 22px);
+      line-height: 1.7;
+      color: #ffe6f7;
+      margin-bottom: 12px;
+    }
+
+    #wishPanel p,
+    #musicPanel p {
+      color: #ffd9f1;
+      font-size: 18px;
+      margin-bottom: 18px;
+    }
+
+    #cakeCanvas {
+      position: relative;
+      width: min(80vw, 560px);
+      height: min(55vw, 420px);
+      max-height: 420px;
+      margin: 0 auto;
+      cursor: pointer;
+      display: block;
+      filter: drop-shadow(0 0 18px rgba(255, 90, 210, 0.45));
+    }
+
+    #wishText {
+      margin-top: 18px;
+      min-height: 30px;
+      color: #fff0fa;
+      font-size: 18px;
+      text-shadow: 0 0 12px rgba(255, 121, 205, 0.6);
+    }
+
+    .musicLayout {
+      display: grid;
+      grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+      gap: 20px;
+      margin-top: 10px;
+      text-align: left;
+    }
+
+    .trackList {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 58vh;
+      overflow: auto;
+      padding-right: 6px;
+    }
+
+    .trackBtn {
+      width: 100%;
+      text-align: left;
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 18px rgba(255, 57, 166, 0.06);
+    }
+
+    .trackBtn strong {
+      display: block;
+      font-size: 16px;
+      color: #fff2fb;
+      margin-bottom: 4px;
+    }
+
+    .trackBtn span {
+      display: block;
+      color: #ffc9eb;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .trackBtn.active {
+      background: linear-gradient(180deg, rgba(255, 61, 176, 0.18), rgba(186, 90, 255, 0.16));
+      border-color: rgba(255, 144, 223, 0.45);
+      box-shadow: 0 0 20px rgba(255, 57, 166, 0.18);
+    }
+
+    .playerCard {
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.03));
+      padding: 18px;
+      box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.02);
+    }
+
+    .playerNow {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .playerNow strong {
+      display: block;
+      font-size: clamp(20px, 3vw, 28px);
+      color: #fff3fb;
+    }
+
+    .playerNow span {
+      display: block;
+      margin-top: 4px;
+      color: #ffc9eb;
+      font-size: 15px;
+    }
+
+    .playerBadge {
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffe6f7;
+      white-space: nowrap;
+    }
+
+    #musicPlayer {
+      width: 100%;
+      height: min(44vh, 360px);
+      border: none;
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(255, 76, 175, 0.16), transparent 24%),
+        linear-gradient(180deg, rgba(10, 10, 10, 0.96), rgba(4, 4, 4, 0.98));
+      box-shadow: 0 0 22px rgba(255, 60, 170, 0.12);
+    }
+
+    #bgMusicPlayer {
+      position: fixed;
+      width: 1px;
+      height: 1px;
+      left: -9999px;
+      top: -9999px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .playerActions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .musicAction {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      min-width: 170px;
+      font-size: 14px;
+    }
+
+    .musicNote {
+      margin-top: 14px;
+      color: #ffcaeb;
+      font-size: 13px;
+      line-height: 1.45;
+      opacity: 0.92;
+    }
+
+    @media (max-width: 900px) {
+      #heartButtons {
+        right: 50%;
+        top: auto;
+        bottom: 24px;
+        transform: translateX(50%);
+        width: min(88vw, 430px);
+        min-width: 0;
+      }
+
+      .actionBtn {
+        font-size: 16px;
+      }
+
+      #smileBtn {
+        max-width: 180px;
+      }
+
+      .musicLayout {
+        grid-template-columns: 1fr;
+      }
+
+      .trackList {
+        max-height: 28vh;
+      }
+
+      #musicPanel {
+        width: min(94vw, 940px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="scene1" class="screen">
+    <canvas id="rainCanvas"></canvas>
+    <div id="centerWord">HAPPY</div>
+    <button id="nextMain">Next</button>
+  </div>
+
+  <div id="scene2" class="screen">
+    <canvas id="phraseRainCanvas"></canvas>
+    <div class="softGlow"></div>
+    <canvas id="heartCanvas"></canvas>
+    <div id="heartUI">
+      <button id="smileBtn">
+        <span>Посміхнись!</span>
+      </button>
+      <div id="smileHint">Саша Стрілєц сікс сєвен</div>
+      <div id="heartButtons">
+        <button id="openCardBtn" class="actionBtn">💌 OPEN FIRST</button>
+        <button id="wishBtn" class="actionBtn">🎂 MAKE A WISH</button>
+        <button id="musicBtn" class="actionBtn">🎧 YOUR FAV HITS</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="cardOverlay" class="overlay">
+    <button class="backBtn" data-close="cardOverlay">BACK</button>
+    <div id="cardPanel">
+      <h2>З днем народження, Мілана</h2>
+        <p>Вітаю тебе з днем народження! Бажаю тобі багато щастя, радості та гарного настрою.</p>
+         <p>Нехай усі твої мрії збуваються, а кожен день приносить щось хороше.</p>
+         <p>Залишайся такою ж красивою, доброю і усміхненою. Нехай поруч завжди будуть люди, які роблять тебе щасливою.</p>
+        <p>Гарно відсвяткуй цей день і нехай він запам'ятається надовго. Зі святом! 💖</p>
+    </div>
+  </div>
+
+  <div id="wishOverlay" class="overlay">
+    <button class="backBtn" data-close="wishOverlay">BACK</button>
+    <div id="wishPanel">
+      <h2>Загадай бажання</h2>
+      <p>Натисни на свічку і загадай бажання.</p>
+      <canvas id="cakeCanvas" width="560" height="420"></canvas>
+      <div id="wishText">Свічка чекає на тебе.</div>
+    </div>
+  </div>
+
+  <div id="musicOverlay" class="overlay">
+    <button class="backBtn" data-close="musicOverlay">BACK</button>
+    <div id="musicPanel">
+      <h2>Улюблені хіти</h2>
+      <p>Обирай трек зі списку. Якщо для нього знайдено пряме відео, воно одразу запуститься в плеєрі нижче.</p>
+      <div class="musicLayout">
+        <div id="trackList" class="trackList"></div>
+        <div class="playerCard">
+          <div class="playerNow">
+            <div>
+              <strong id="nowTitle">Плак-Плак</strong>
+              <span id="nowArtist">IC3PEAK</span>
+            </div>
+            <div class="playerBadge">YouTube Player</div>
+          </div>
+          <div id="musicPlayer" title="Favorite hits player"></div>
+          <div class="playerActions">
+            <a id="ytLink" class="musicAction" target="_blank" rel="noopener noreferrer">Відкрити на YouTube</a>
+            <a id="ytMusicLink" class="musicAction" target="_blank" rel="noopener noreferrer">Відкрити в YouTube Music</a>
+          </div>
+          <div class="musicNote">
+            Назви треків залишені як в оригіналі. Якщо прямого відео не знайшлось, кнопки нижче відкриють точний пошук за назвою та артистом.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button id="homeBtn" class="cornerBtn">HOME</button>
+  <div id="bgMusicPlayer" aria-hidden="true"></div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    const centerWord = document.getElementById("centerWord");
+    const nextMain = document.getElementById("nextMain");
+    const scene1 = document.getElementById("scene1");
+    const scene2 = document.getElementById("scene2");
+    const heartUI = document.getElementById("heartUI");
+    const smileBtn = document.getElementById("smileBtn");
+    const smileHint = document.getElementById("smileHint");
+    const cardOverlay = document.getElementById("cardOverlay");
+    const wishOverlay = document.getElementById("wishOverlay");
+    const musicOverlay = document.getElementById("musicOverlay");
+    const openCardBtn = document.getElementById("openCardBtn");
+    const wishBtn = document.getElementById("wishBtn");
+    const musicBtn = document.getElementById("musicBtn");
+    const homeBtn = document.getElementById("homeBtn");
+    const closeButtons = document.querySelectorAll("[data-close]");
+    const trackList = document.getElementById("trackList");
+    const nowTitle = document.getElementById("nowTitle");
+    const nowArtist = document.getElementById("nowArtist");
+    const musicPlayerHost = document.getElementById("musicPlayer");
+    const ytLink = document.getElementById("ytLink");
+    const ytMusicLink = document.getElementById("ytMusicLink");
+    const wishText = document.getElementById("wishText");
+
+    const words = ["HAPPY", "BIRTHDAY", "MILANA", "❤️"];
+    const BG_NORMAL_VOLUME = 5;
+    const BG_DUCK_VOLUME = 1;
+    const backgroundTrack = {
+      title: "Apocalypse",
+      artist: "Cigarettes After Sex",
+      videoId: "sElE_BfQ67s",
+      syncStartSeconds: 0
+    };
+    let wordIndex = 0;
+    let scene1Timer = null;
+    let scene2Started = false;
+    let youtubeApiReady = false;
+    let mainPlayer = null;
+    let bgPlayer = null;
+    let mainPlayerReady = false;
+    let bgPlayerReady = false;
+    let pendingTrackIndex = 0;
+    let currentTrackIndex = 0;
+    let backgroundRequested = false;
+    let duckingInterval = null;
+
+    function runScene1Sequence() {
+      centerWord.textContent = words[wordIndex];
+      const isHeart = words[wordIndex] === "❤️";
+      centerWord.classList.toggle("heartWord", isHeart);
+
+      if (isHeart) {
+        nextMain.classList.add("show");
+        return;
+      }
+
+      wordIndex += 1;
+      scene1Timer = setTimeout(runScene1Sequence, 1500);
+    }
+
+    function resetScene1() {
+      clearTimeout(scene1Timer);
+      wordIndex = 0;
+      centerWord.classList.remove("heartWord", "hide");
+      centerWord.textContent = words[0];
+      nextMain.classList.remove("show");
+      scene1Timer = setTimeout(runScene1Sequence, 900);
+    }
+
+    function openOverlay(overlay) {
+      overlay.classList.add("show");
+    }
+
+    function ensureYoutubePlayers() {
+      if (!youtubeApiReady || !window.YT || !YT.Player || mainPlayer || bgPlayer) return;
+
+      mainPlayer = new YT.Player("musicPlayer", {
+        videoId: tracks[currentTrackIndex].videoId,
+        playerVars: {
+          autoplay: 0,
+          rel: 0,
+          modestbranding: 1,
+          playsinline: 1
+        },
+        events: {
+          onReady: () => {
+            mainPlayerReady = true;
+            if (pendingTrackIndex !== null && musicOverlay.classList.contains("show")) {
+              loadTrackIntoMainPlayer(pendingTrackIndex);
+            }
+            startDuckingSync();
+          },
+          onStateChange: () => {
+            syncBackgroundVolume();
+          }
+        }
+      });
+
+      bgPlayer = new YT.Player("bgMusicPlayer", {
+        videoId: backgroundTrack.videoId,
+        playerVars: {
+          autoplay: 0,
+          controls: 0,
+          disablekb: 1,
+          fs: 0,
+          loop: 1,
+          playlist: backgroundTrack.videoId,
+          rel: 0,
+          modestbranding: 1,
+          playsinline: 1
+        },
+        events: {
+          onReady: () => {
+            bgPlayerReady = true;
+            bgPlayer.setVolume(BG_NORMAL_VOLUME);
+            startDuckingSync();
+            if (backgroundRequested) {
+              startBackgroundMusic();
+            }
+          }
+        }
+      });
+    }
+
+    function startDuckingSync() {
+      if (duckingInterval) return;
+      duckingInterval = setInterval(() => {
+        syncBackgroundVolume();
+      }, 700);
+    }
+
+    function stopMainPlayer() {
+      if (mainPlayer && mainPlayer.stopVideo) {
+        mainPlayer.stopVideo();
+      }
+    }
+
+    function closeOverlay(overlay) {
+      overlay.classList.remove("show");
+      if (overlay === musicOverlay) {
+        stopMainPlayer();
+        syncBackgroundVolume();
+      }
+    }
+
+    function closeAllOverlays() {
+      [cardOverlay, wishOverlay, musicOverlay].forEach(closeOverlay);
+    }
+
+    smileBtn.addEventListener("click", () => {
+      smileHint.classList.add("show");
+      clearTimeout(smileBtn._timer);
+      smileBtn._timer = setTimeout(() => {
+        smileHint.classList.remove("show");
+      }, 2200);
+    });
+
+    openCardBtn.addEventListener("click", () => openOverlay(cardOverlay));
+    wishBtn.addEventListener("click", () => openOverlay(wishOverlay));
+    musicBtn.addEventListener("click", () => {
+      openOverlay(musicOverlay);
+      ensureYoutubePlayers();
+      selectTrack(currentTrackIndex);
+    });
+
+    closeButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        closeOverlay(document.getElementById(btn.dataset.close));
+      });
+    });
+
+    [cardOverlay, wishOverlay, musicOverlay].forEach(overlay => {
+      overlay.addEventListener("click", event => {
+        if (event.target === overlay) closeOverlay(overlay);
+      });
+    });
+
+    nextMain.addEventListener("click", () => {
+      clearTimeout(scene1Timer);
+      centerWord.classList.add("hide");
+      nextMain.classList.remove("show");
+
+      setTimeout(() => {
+        scene1.style.display = "none";
+        scene2.classList.add("show");
+        homeBtn.classList.add("show");
+        startScene2();
+        backgroundRequested = true;
+        ensureYoutubePlayers();
+        startBackgroundMusic();
+      }, 600);
+    });
+
+    homeBtn.addEventListener("click", () => {
+      closeAllOverlays();
+      scene2.classList.remove("show");
+      scene1.style.display = "block";
+      homeBtn.classList.remove("show");
+      stopMainPlayer();
+      pauseBackgroundMusic();
+      resetScene1();
+    });
+
+    function heartPoint(t) {
+      const x = 16 * Math.pow(Math.sin(t), 3);
+      const y =
+        13 * Math.cos(t) -
+        5 * Math.cos(2 * t) -
+        2 * Math.cos(3 * t) -
+        Math.cos(4 * t);
+      return { x, y };
+    }
+
+    /* ===== scene 1 rain ===== */
+    const rainCanvas = document.getElementById("rainCanvas");
+    const rainCtx = rainCanvas.getContext("2d");
+    const rainLetters = ["H", "A", "P", "P", "Y", "", "B", "I", "R", "T", "H", "D", "A", "Y"];
+    let rainCols = [];
+
+    function resizeRain() {
+      rainCanvas.width = innerWidth;
+      rainCanvas.height = innerHeight;
+      const count = Math.max(32, Math.floor(innerWidth / 13));
+      rainCols = Array.from({ length: count }, () => ({
+        x: Math.random() * innerWidth,
+        y: -320 - Math.random() * 820,
+        speed: 2.5 + Math.random() * 3.3,
+        delay: Math.random() * 35,
+        alpha: 0.18 + Math.random() * 0.38
+      }));
+    }
+
+    function drawRain() {
+      rainCtx.fillStyle = "#000";
+      rainCtx.fillRect(0, 0, rainCanvas.width, rainCanvas.height);
+      rainCtx.fillStyle = "#ff5fd2";
+      rainCtx.font = "18px monospace";
+      rainCtx.shadowBlur = 16;
+      rainCtx.shadowColor = "#ff5fd2";
+
+      rainCols.forEach(col => {
+        if (col.delay > 0) {
+          col.delay -= 1;
+          return;
+        }
+
+        col.alpha = Math.min(1, col.alpha + 0.016);
+        rainCtx.globalAlpha = col.alpha;
+
+        let y = col.y;
+        for (let i = 0; i < rainLetters.length; i++) {
+          if (rainLetters[i]) {
+            rainCtx.fillText(rainLetters[i], col.x, y);
+          }
+          y += 18;
+        }
+
+        col.y += col.speed;
+        if (col.y > rainCanvas.height + 340) {
+          col.y = -520;
+          col.x = Math.random() * rainCanvas.width;
+          col.speed = 2.2 + Math.random() * 3.2;
+          col.alpha = 0;
+        }
+      });
+
+      rainCtx.globalAlpha = 1;
+      requestAnimationFrame(drawRain);
+    }
+
+    /* ===== scene 2 phrase columns ===== */
+    const phraseRainCanvas = document.getElementById("phraseRainCanvas");
+    const phraseRainCtx = phraseRainCanvas.getContext("2d");
+    const phraseSet = ["i love you", "i love you", "i love you", "i love you"];
+    let phraseCols = [];
+
+    function resizePhraseRain() {
+      phraseRainCanvas.width = innerWidth;
+      phraseRainCanvas.height = innerHeight;
+      const count = Math.max(22, Math.floor(innerWidth / 42));
+      phraseCols = Array.from({ length: count }, (_, i) => ({
+        x: (i + 0.45) * (innerWidth / count),
+        y: -Math.random() * innerHeight,
+        speed: 0.8 + Math.random() * 1.4,
+        size: 11 + Math.random() * 5,
+        alpha: 0.06 + Math.random() * 0.09,
+        step: 34 + Math.random() * 20
+      }));
+    }
+
+    function drawPhraseRain() {
+      phraseRainCtx.clearRect(0, 0, phraseRainCanvas.width, phraseRainCanvas.height);
+      phraseRainCtx.shadowBlur = 10;
+      phraseRainCtx.shadowColor = "#ff50bc";
+
+      phraseCols.forEach((col, index) => {
+        let y = col.y;
+        let line = 0;
+
+        while (y < phraseRainCanvas.height + 70) {
+          const text = phraseSet[(index + line) % phraseSet.length];
+          phraseRainCtx.font = `700 ${col.size}px Arial`;
+          phraseRainCtx.fillStyle = `rgba(255, 94, 205, ${col.alpha})`;
+          phraseRainCtx.fillText(text, col.x, y);
+          y += col.step;
+          line++;
+        }
+
+        col.y += col.speed;
+        if (col.y > col.step) {
+          col.y = -col.step * (3 + Math.random() * 4);
+        }
+      });
+
+      requestAnimationFrame(drawPhraseRain);
+    }
+
+    /* ===== scene 2 heart animation ===== */
+    const heartCanvas = document.getElementById("heartCanvas");
+    const heartCtx = heartCanvas.getContext("2d");
+    let heartAnimationStarted = false;
+    let outlineParticles = [];
+    let fillParticles = [];
+    let phase = "outline";
+    let outlineProgress = 0;
+    let outlineDoneFrames = 0;
+    let fillVisible = 0;
+    let animationClock = 0;
+
+    function resizeHeart() {
+      heartCanvas.width = innerWidth;
+      heartCanvas.height = innerHeight;
+    }
+
+    function makeOutlineParticle(tx, ty, index) {
+      return {
+        tx,
+        ty,
+        x: Math.random() * innerWidth,
+        y: Math.random() * innerHeight,
+        vx: 0,
+        vy: 0,
+        text: "i love you",
+        size: 8.2 + Math.random() * 1.4,
+        angle: (Math.random() - 0.5) * 0.12,
+        alpha: 1
+      };
+    }
+
+    function makeFillParticle(tx, ty) {
+      return {
+        tx,
+        ty,
+        x: Math.random() * innerWidth,
+        y: Math.random() * innerHeight,
+        vx: 0,
+        vy: 0,
+        text: "i love you",
+        size: 6.8 + Math.random() * 1.6,
+        angle: (Math.random() - 0.5) * 0.16,
+        alpha: 0,
+        delay: Math.random() * 70,
+        phase: Math.random() * Math.PI * 2,
+        drift: 0.7 + Math.random() * 0.9
+      };
+    }
+
+    function buildAnimatedHeart() {
+      resizeHeart();
+      outlineParticles = [];
+      fillParticles = [];
+      phase = "outline";
+      outlineProgress = 0;
+      outlineDoneFrames = 0;
+      fillVisible = 0;
+      animationClock = 0;
+
+      const scale = Math.min(innerWidth, innerHeight) / 34;
+      const cx = innerWidth / 2;
+      const cy = innerHeight / 2;
+
+      const outlineCount = 250;
+      for (let i = 0; i < outlineCount; i++) {
+        const t = (i / outlineCount) * Math.PI * 2;
+        const p = heartPoint(t);
+        outlineParticles.push(
+          makeOutlineParticle(cx + p.x * scale, cy - p.y * scale, i)
+        );
+      }
+
+      const fillCount = 128;
+      const accepted = [];
+      let attempts = 0;
+
+      while (fillParticles.length < fillCount && attempts < 4500) {
+        attempts++;
+        const t = Math.random() * Math.PI * 2;
+        const zoneRoll = Math.random();
+        let r;
+
+        if (zoneRoll < 0.58) {
+          r = 0.46 + Math.random() * 0.24;
+        } else if (zoneRoll < 0.9) {
+          r = 0.28 + Math.random() * 0.14;
+        } else {
+          r = 0.14 + Math.random() * 0.08;
+        }
+
+        const boundary = heartPoint(t);
+        const jitter = 0.55 + Math.random() * 0.45;
+        const tx = cx + boundary.x * scale * r + (Math.random() - 0.5) * 7 * jitter;
+        const ty = cy - boundary.y * scale * r + (Math.random() - 0.5) * 7 * jitter;
+
+        const tooClose = accepted.some(point => Math.hypot(point.tx - tx, point.ty - ty) < 22);
+        const tooCentered = Math.hypot((tx - cx) / (scale * 5.6), (ty - cy) / (scale * 5.1)) < 0.18 && Math.random() > 0.2;
+
+        if (tooClose || tooCentered) {
+          continue;
+        }
+
+        const point = makeFillParticle(tx, ty);
+        accepted.push(point);
+        fillParticles.push(point);
+      }
+    }
+
+    function updateParticle(p, strength = 0.0044, damping = 0.9) {
+      const dx = p.tx - p.x;
+      const dy = p.ty - p.y;
+      p.vx += dx * strength;
+      p.vy += dy * strength;
+      p.vx *= damping;
+      p.vy *= damping;
+      p.x += p.vx;
+      p.y += p.vy;
+      return Math.hypot(dx, dy);
+    }
+
+    function drawPhrase(ctx, particle, x, y, alpha = 1) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(x, y);
+      ctx.rotate(particle.angle || 0);
+      ctx.fillStyle = "#ff5ac6";
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = "#ff4aba";
+      ctx.font = `900 ${particle.size}px Arial`;
+      ctx.fillText(particle.text, 0, 0);
+      ctx.restore();
+    }
+
+    function drawFloatingHeart(time) {
+      const cx = heartCanvas.width / 2;
+      const cy = heartCanvas.height / 2;
+      const pulseScale = 1 + Math.sin(time * 2.6) * 0.032;
+
+      outlineParticles.forEach(p => {
+        const dx = p.tx - cx;
+        const dy = p.ty - cy;
+        drawPhrase(heartCtx, p, cx + dx * pulseScale, cy + dy * pulseScale, 1);
+      });
+
+      fillParticles.forEach(p => {
+        const dx = p.tx - cx;
+        const dy = p.ty - cy;
+        drawPhrase(heartCtx, p, cx + dx * pulseScale, cy + dy * pulseScale, p.alpha);
+      });
+    }
+
+    function animateHeart() {
+      if (!heartAnimationStarted) return;
+
+      animationClock += 0.016;
+      heartCtx.clearRect(0, 0, heartCanvas.width, heartCanvas.height);
+
+      if (phase === "outline") {
+        outlineProgress = Math.min(outlineProgress + 5, outlineParticles.length);
+        let settled = 0;
+
+        for (let i = 0; i < outlineProgress; i++) {
+          const p = outlineParticles[i];
+          const dist = updateParticle(p, 0.0047, 0.9);
+          drawPhrase(heartCtx, p, p.x, p.y, 1);
+          if (dist < 2.8) settled++;
+        }
+
+        if (outlineProgress >= outlineParticles.length && settled >= outlineParticles.length - 8) {
+          outlineDoneFrames++;
+          if (outlineDoneFrames > 2) {
+            phase = "fill";
+          }
+        }
+      } else if (phase === "fill") {
+        outlineParticles.forEach(p => {
+          updateParticle(p, 0.0038, 0.88);
+          drawPhrase(heartCtx, p, p.x, p.y, 1);
+        });
+
+        fillVisible = Math.min(fillVisible + 8, fillParticles.length);
+        let settled = 0;
+
+        for (let i = 0; i < fillVisible; i++) {
+          const p = fillParticles[i];
+          if (p.delay > 0) {
+            p.delay -= 1;
+          } else {
+            p.alpha = Math.min(0.96, p.alpha + 0.045);
+            const dist = updateParticle(p, 0.0035, 0.9);
+            drawPhrase(heartCtx, p, p.x, p.y, p.alpha);
+            if (dist < 2.6 && p.alpha > 0.9) settled++;
+          }
+        }
+
+        if (fillVisible >= fillParticles.length && settled >= fillParticles.length - 8) {
+          phase = "float";
+          heartUI.classList.add("show");
+        }
+      } else {
+        drawFloatingHeart(animationClock);
+      }
+
+      requestAnimationFrame(animateHeart);
+    }
+
+    function startScene2() {
+      if (!scene2Started) {
+        resizePhraseRain();
+        resizeHeart();
+        drawPhraseRain();
+        buildAnimatedHeart();
+        heartAnimationStarted = true;
+        animateHeart();
+        scene2Started = true;
+      } else {
+        buildAnimatedHeart();
+        heartUI.classList.remove("show");
+      }
+    }
+
+    /* ===== cake ===== */
+    const cakeCanvas = document.getElementById("cakeCanvas");
+    const cakeCtx = cakeCanvas.getContext("2d");
+    let candleBlown = false;
+    let cakeTime = 0;
+
+    function drawCake() {
+      cakeTime += 0.025;
+      cakeCtx.clearRect(0, 0, cakeCanvas.width, cakeCanvas.height);
+
+      const w = cakeCanvas.width;
+      const h = cakeCanvas.height;
+      const cx = w / 2;
+      const plateY = h * 0.8;
+
+      cakeCtx.save();
+      cakeCtx.shadowBlur = 18;
+      cakeCtx.shadowColor = "rgba(255, 95, 210, 0.35)";
+
+      cakeCtx.fillStyle = "rgba(255, 216, 244, 0.18)";
+      cakeCtx.beginPath();
+      cakeCtx.ellipse(cx, plateY, 170, 26, 0, 0, Math.PI * 2);
+      cakeCtx.fill();
+
+      cakeCtx.fillStyle = "#ff9bd8";
+      cakeCtx.beginPath();
+      cakeCtx.roundRect(cx - 130, plateY - 42, 260, 52, 20);
+      cakeCtx.fill();
+
+      cakeCtx.fillStyle = "#ffc7eb";
+      cakeCtx.beginPath();
+      cakeCtx.roundRect(cx - 115, plateY - 88, 230, 58, 18);
+      cakeCtx.fill();
+
+      cakeCtx.fillStyle = "#ffe4f7";
+      for (let i = 0; i < 7; i++) {
+        const x = cx - 95 + i * 32;
+        cakeCtx.beginPath();
+        cakeCtx.arc(x, plateY - 86, 15, Math.PI, 0);
+        cakeCtx.fill();
+      }
+
+      cakeCtx.fillStyle = "#ff66b8";
+      for (let i = 0; i < 7; i++) {
+        const x = cx - 92 + i * 31;
+        cakeCtx.beginPath();
+        cakeCtx.arc(x, plateY - 32, 13, 0, Math.PI);
+        cakeCtx.fill();
+      }
+
+      cakeCtx.fillStyle = "#fff8b6";
+      cakeCtx.fillRect(cx - 5, plateY - 150, 10, 62);
+
+      if (!candleBlown) {
+        const flicker = Math.sin(cakeTime * 7) * 4;
+        cakeCtx.fillStyle = "#ffd35c";
+        cakeCtx.beginPath();
+        cakeCtx.ellipse(cx, plateY - 165 + flicker * 0.16, 16, 24 + flicker * 0.2, 0, 0, Math.PI * 2);
+        cakeCtx.fill();
+
+        cakeCtx.fillStyle = "#fff7d4";
+        cakeCtx.beginPath();
+        cakeCtx.ellipse(cx, plateY - 168 + flicker * 0.14, 8, 12 + flicker * 0.15, 0, 0, Math.PI * 2);
+        cakeCtx.fill();
+      } else {
+        cakeCtx.strokeStyle = "rgba(235,235,235,0.7)";
+        cakeCtx.lineWidth = 3;
+        for (let i = 0; i < 3; i++) {
+          cakeCtx.beginPath();
+          cakeCtx.moveTo(cx + i * 5 - 5, plateY - 150);
+          cakeCtx.bezierCurveTo(cx + i * 5 - 18, plateY - 168, cx + i * 5 + 10, plateY - 190, cx + i * 5 - 2, plateY - 210);
+          cakeCtx.stroke();
+        }
+      }
+
+      cakeCtx.restore();
+      requestAnimationFrame(drawCake);
+    }
+
+    cakeCanvas.addEventListener("click", event => {
+      const rect = cakeCanvas.getBoundingClientRect();
+      const scaleX = cakeCanvas.width / rect.width;
+      const scaleY = cakeCanvas.height / rect.height;
+      const x = (event.clientX - rect.left) * scaleX;
+      const y = (event.clientY - rect.top) * scaleY;
+      const cx = cakeCanvas.width / 2;
+      const flameY = cakeCanvas.height * 0.8 - 166;
+
+      if (Math.hypot(x - cx, y - flameY) < 34) {
+        candleBlown = true;
+        wishText.textContent = "Бажання загадано. Нехай воно обов'язково здійсниться.";
+      }
+    });
+
+    /* ===== favorite hits ===== */
+    const tracks = [
+      { title: "Плак-Плак", artist: "IC3PEAK", videoId: "YEuKCULJ074" },
+      { title: "гладиатор/рыцарь", artist: "fallen777angel", videoId: "DSWNqFQRsfM" },
+      { title: "стало похуй", artist: "kurokov, mapt0v", videoId: "kegZy_4_DqA" },
+      { title: "я выберу тебя", artist: "mapt0v", videoId: "Nnmp31PIEWQ" }
+    ];
+
+    function startBackgroundMusic() {
+      if (!bgPlayerReady || !bgPlayer) return;
+      try {
+        bgPlayer.unMute();
+        bgPlayer.seekTo(backgroundTrack.syncStartSeconds, true);
+        bgPlayer.setVolume(BG_NORMAL_VOLUME);
+        bgPlayer.playVideo();
+      } catch (error) {}
+    }
+
+    function pauseBackgroundMusic() {
+      if (!bgPlayerReady || !bgPlayer) return;
+      try {
+        bgPlayer.pauseVideo();
+      } catch (error) {}
+    }
+
+    function tryUnlockBackgroundMusic() {
+      if (!backgroundRequested || !bgPlayerReady || !bgPlayer || !window.YT) return;
+      const bgState = bgPlayer.getPlayerState ? bgPlayer.getPlayerState() : YT.PlayerState.UNSTARTED;
+      if (bgState !== YT.PlayerState.PLAYING) {
+        startBackgroundMusic();
+      }
+    }
+
+    function syncBackgroundVolume() {
+      if (!bgPlayerReady || !bgPlayer || !window.YT) return;
+      const state = mainPlayerReady && mainPlayer ? mainPlayer.getPlayerState() : YT.PlayerState.UNSTARTED;
+      const targetVolume = state === YT.PlayerState.PLAYING ? BG_DUCK_VOLUME : BG_NORMAL_VOLUME;
+
+      try {
+        bgPlayer.setVolume(targetVolume);
+      } catch (error) {}
+    }
+
+    function buildTrackList() {
+      trackList.innerHTML = "";
+
+      tracks.forEach((track, index) => {
+        const button = document.createElement("button");
+        button.className = "trackBtn";
+        button.innerHTML = `<strong>${track.title}</strong><span>${track.artist}</span>`;
+        button.addEventListener("click", () => selectTrack(index));
+        trackList.appendChild(button);
+      });
+    }
+
+    function loadTrackIntoMainPlayer(index) {
+      if (!mainPlayerReady || !mainPlayer) {
+        pendingTrackIndex = index;
+        return;
+      }
+
+      mainPlayer.loadVideoById(tracks[index].videoId);
+      syncBackgroundVolume();
+    }
+
+    function selectTrack(index) {
+      const track = tracks[index];
+      const query = `${track.title} ${track.artist}`;
+      const encodedQuery = encodeURIComponent(query);
+
+      currentTrackIndex = index;
+      pendingTrackIndex = index;
+      nowTitle.textContent = track.title;
+      nowArtist.textContent = track.artist;
+      ytLink.href = `https://www.youtube.com/results?search_query=${encodedQuery}`;
+      ytMusicLink.href = `https://music.youtube.com/search?q=${encodedQuery}`;
+      ensureYoutubePlayers();
+      loadTrackIntoMainPlayer(index);
+
+      [...trackList.children].forEach((button, buttonIndex) => {
+        button.classList.toggle("active", buttonIndex === index);
+      });
+    }
+
+    window.onYouTubeIframeAPIReady = function () {
+      youtubeApiReady = true;
+      ensureYoutubePlayers();
+    };
+
+    buildTrackList();
+    selectTrack(0);
+    stopMainPlayer();
+
+    function handleResize() {
+      resizeRain();
+      resizePhraseRain();
+      if (scene2Started) {
+        buildAnimatedHeart();
+        heartUI.classList.remove("show");
+      }
+    }
+
+    window.addEventListener("resize", handleResize);
+    document.addEventListener("click", tryUnlockBackgroundMusic);
+
+    resizeRain();
+    drawRain();
+    resetScene1();
+    drawCake();
+  </script>
+</body>
+</html>
