@@ -63,7 +63,7 @@
       top: 50%;
       transform: translate(-50%, -50%);
       font-family: Arial, sans-serif;
-      font-size: clamp(62px, 10vw, 142px);
+      font-size: clamp(42px, 8vw, 110px);
       font-weight: 900;
       letter-spacing: 0.08em;
       color: var(--pink);
@@ -836,6 +836,7 @@
       stopMainPlayer();
       pauseBackgroundMusic();
       resetScene1();
+      heartAnimationStarted = false; // Reset heart animation
     });
 
     function heartPoint(t) {
@@ -952,7 +953,7 @@
       requestAnimationFrame(drawPhraseRain);
     }
 
-    /* ===== scene 2 heart animation ===== */
+    /* ===== scene 2 heart animation (from Untitled-1.html - enhanced version) ===== */
     const heartCanvas = document.getElementById("heartCanvas");
     const heartCtx = heartCanvas.getContext("2d");
     let heartAnimationStarted = false;
@@ -960,16 +961,16 @@
     let fillParticles = [];
     let phase = "outline";
     let outlineProgress = 0;
+    let revealIndex = 0;
     let outlineDoneFrames = 0;
-    let fillVisible = 0;
-    let animationClock = 0;
+    let fillDoneFrames = 0;
 
     function resizeHeart() {
       heartCanvas.width = innerWidth;
       heartCanvas.height = innerHeight;
     }
 
-    function makeOutlineParticle(tx, ty, index) {
+    function makeOutlineParticle(tx, ty) {
       return {
         tx,
         ty,
@@ -978,9 +979,8 @@
         vx: 0,
         vy: 0,
         text: "i love you",
-        size: 8.2 + Math.random() * 1.4,
-        angle: (Math.random() - 0.5) * 0.12,
-        alpha: 1
+        size: 9,
+        angle: 0
       };
     }
 
@@ -992,13 +992,14 @@
         y: Math.random() * innerHeight,
         vx: 0,
         vy: 0,
-        text: "i love you",
-        size: 6.8 + Math.random() * 1.6,
-        angle: (Math.random() - 0.5) * 0.16,
+        text: Math.random() > 0.45 ? "love" : "i love you",
+        size: 6.4 + Math.random() * 1.6,
+        angle: (Math.random() - 0.5) * 0.24,
         alpha: 0,
-        delay: Math.random() * 70,
-        phase: Math.random() * Math.PI * 2,
-        drift: 0.7 + Math.random() * 0.9
+        delay: Math.random() * 90,
+        offsetX: (Math.random() - 0.5) * 5,
+        offsetY: (Math.random() - 0.5) * 5,
+        phase: Math.random() * Math.PI * 2
       };
     }
 
@@ -1008,60 +1009,42 @@
       fillParticles = [];
       phase = "outline";
       outlineProgress = 0;
+      revealIndex = 0;
       outlineDoneFrames = 0;
-      fillVisible = 0;
-      animationClock = 0;
+      fillDoneFrames = 0;
 
-      const scale = Math.min(innerWidth, innerHeight) / 34;
+      const margin = 60; // отступ от краёв
+const scale = Math.min(
+  (innerWidth - margin * 2) / 32,
+  (innerHeight - margin * 2) / 30
+);
       const cx = innerWidth / 2;
       const cy = innerHeight / 2;
 
-      const outlineCount = 250;
+      const outlineCount = 280;
       for (let i = 0; i < outlineCount; i++) {
         const t = (i / outlineCount) * Math.PI * 2;
         const p = heartPoint(t);
         outlineParticles.push(
-          makeOutlineParticle(cx + p.x * scale, cy - p.y * scale, i)
+          makeOutlineParticle(cx + p.x * scale, cy - p.y * scale)
         );
       }
 
-      const fillCount = 128;
-      const accepted = [];
-      let attempts = 0;
-
-      while (fillParticles.length < fillCount && attempts < 4500) {
-        attempts++;
+      const fillCount = 350;
+      for (let i = 0; i < fillCount; i++) {
         const t = Math.random() * Math.PI * 2;
-        const zoneRoll = Math.random();
-        let r;
-
-        if (zoneRoll < 0.58) {
-          r = 0.46 + Math.random() * 0.24;
-        } else if (zoneRoll < 0.9) {
-          r = 0.28 + Math.random() * 0.14;
-        } else {
-          r = 0.14 + Math.random() * 0.08;
-        }
-
-        const boundary = heartPoint(t);
-        const jitter = 0.55 + Math.random() * 0.45;
-        const tx = cx + boundary.x * scale * r + (Math.random() - 0.5) * 7 * jitter;
-        const ty = cy - boundary.y * scale * r + (Math.random() - 0.5) * 7 * jitter;
-
-        const tooClose = accepted.some(point => Math.hypot(point.tx - tx, point.ty - ty) < 22);
-        const tooCentered = Math.hypot((tx - cx) / (scale * 5.6), (ty - cy) / (scale * 5.1)) < 0.18 && Math.random() > 0.2;
-
-        if (tooClose || tooCentered) {
-          continue;
-        }
-
-        const point = makeFillParticle(tx, ty);
-        accepted.push(point);
-        fillParticles.push(point);
+        const r = Math.sqrt(Math.random()) * 0.82;
+        const p = heartPoint(t);
+        fillParticles.push(
+          makeFillParticle(
+            cx + p.x * scale * r + (Math.random() - 0.5) * 8,
+            cy - p.y * scale * r + (Math.random() - 0.5) * 8
+          )
+        );
       }
     }
 
-    function updateParticle(p, strength = 0.0044, damping = 0.9) {
+    function updateParticle(p, strength = 0.0042, damping = 0.9) {
       const dx = p.tx - p.x;
       const dy = p.ty - p.y;
       p.vx += dx * strength;
@@ -1078,7 +1061,7 @@
       ctx.globalAlpha = alpha;
       ctx.translate(x, y);
       ctx.rotate(particle.angle || 0);
-      ctx.fillStyle = "#ff5ac6";
+      ctx.fillStyle = "#ff58c3";
       ctx.shadowBlur = 18;
       ctx.shadowColor = "#ff4aba";
       ctx.font = `900 ${particle.size}px Arial`;
@@ -1086,74 +1069,79 @@
       ctx.restore();
     }
 
-    function drawFloatingHeart(time) {
+    function drawFloatingHeart(particles, time) {
       const cx = heartCanvas.width / 2;
       const cy = heartCanvas.height / 2;
-      const pulseScale = 1 + Math.sin(time * 2.6) * 0.032;
-
-      outlineParticles.forEach(p => {
+      particles.forEach((p, i) => {
         const dx = p.tx - cx;
         const dy = p.ty - cy;
-        drawPhrase(heartCtx, p, cx + dx * pulseScale, cy + dy * pulseScale, 1);
-      });
-
-      fillParticles.forEach(p => {
-        const dx = p.tx - cx;
-        const dy = p.ty - cy;
-        drawPhrase(heartCtx, p, cx + dx * pulseScale, cy + dy * pulseScale, p.alpha);
+        const breathe = 1 + Math.sin(time * 2) * 0.018;
+        const driftX = Math.sin(time * 1.55 + i * 0.08) * 1.35;
+        const driftY = Math.cos(time * 1.9 + i * 0.08) * 1.2;
+        drawPhrase(
+          heartCtx,
+          p,
+          cx + dx * breathe + driftX,
+          cy + dy * breathe + driftY,
+          p.alpha ?? 1
+        );
       });
     }
 
     function animateHeart() {
       if (!heartAnimationStarted) return;
 
-      animationClock += 0.016;
       heartCtx.clearRect(0, 0, heartCanvas.width, heartCanvas.height);
 
       if (phase === "outline") {
-        outlineProgress = Math.min(outlineProgress + 5, outlineParticles.length);
-        let settled = 0;
+        outlineProgress = Math.min(outlineProgress + 1.15, outlineParticles.length);
 
+        let settled = 0;
         for (let i = 0; i < outlineProgress; i++) {
           const p = outlineParticles[i];
-          const dist = updateParticle(p, 0.0047, 0.9);
+          const dist = updateParticle(p, 0.0045, 0.9);
           drawPhrase(heartCtx, p, p.x, p.y, 1);
-          if (dist < 2.8) settled++;
+          if (dist < 3) settled++;
         }
 
         if (outlineProgress >= outlineParticles.length && settled >= outlineParticles.length - 8) {
           outlineDoneFrames++;
-          if (outlineDoneFrames > 2) {
-            phase = "fill";
-          }
+          if (outlineDoneFrames > 22) phase = "fill";
         }
       } else if (phase === "fill") {
-        outlineParticles.forEach(p => {
-          updateParticle(p, 0.0038, 0.88);
-          drawPhrase(heartCtx, p, p.x, p.y, 1);
-        });
+        outlineParticles.forEach(p => drawPhrase(heartCtx, p, p.tx, p.ty, 1));
+        revealIndex = Math.min(revealIndex + 4, fillParticles.length);
 
-        fillVisible = Math.min(fillVisible + 8, fillParticles.length);
-        let settled = 0;
-
-        for (let i = 0; i < fillVisible; i++) {
+        let ready = 0;
+        for (let i = 0; i < revealIndex; i++) {
           const p = fillParticles[i];
           if (p.delay > 0) {
-            p.delay -= 1;
-          } else {
-            p.alpha = Math.min(0.96, p.alpha + 0.045);
-            const dist = updateParticle(p, 0.0035, 0.9);
-            drawPhrase(heartCtx, p, p.x, p.y, p.alpha);
-            if (dist < 2.6 && p.alpha > 0.9) settled++;
+            p.delay--;
+            continue;
           }
+
+          p.alpha = Math.min(p.alpha + 0.045, 1);
+          const floatX = Math.sin(Date.now() * 0.004 + p.phase) * p.offsetX;
+          const floatY = Math.cos(Date.now() * 0.004 + p.phase) * p.offsetY;
+          drawPhrase(heartCtx, p, p.tx + floatX, p.ty + floatY, p.alpha);
+
+          if (p.alpha >= 0.98) ready++;
         }
 
-        if (fillVisible >= fillParticles.length && settled >= fillParticles.length - 8) {
-          phase = "float";
-          heartUI.classList.add("show");
+        if (revealIndex >= fillParticles.length && ready >= fillParticles.length - 10) {
+          fillDoneFrames++;
+          if (fillDoneFrames > 5) {
+            phase = "float";
+            fillParticles.forEach(p => p.alpha = 1);
+            heartUI.classList.add("show");
+          }
         }
       } else {
-        drawFloatingHeart(animationClock);
+        const time = Date.now() * 0.0012;
+        outlineParticles.forEach(p => p.alpha = 1);
+        fillParticles.forEach(p => p.alpha = 1);
+        drawFloatingHeart(outlineParticles, time);
+        drawFloatingHeart(fillParticles, time);
       }
 
       requestAnimationFrame(animateHeart);
@@ -1162,7 +1150,6 @@
     function startScene2() {
       if (!scene2Started) {
         resizePhraseRain();
-        resizeHeart();
         drawPhraseRain();
         buildAnimatedHeart();
         heartAnimationStarted = true;
@@ -1171,6 +1158,13 @@
       } else {
         buildAnimatedHeart();
         heartUI.classList.remove("show");
+        // Restart animation
+        phase = "outline";
+        outlineProgress = 0;
+        revealIndex = 0;
+        outlineDoneFrames = 0;
+        fillDoneFrames = 0;
+        animateHeart();
       }
     }
 
@@ -1364,7 +1358,7 @@
     function handleResize() {
       resizeRain();
       resizePhraseRain();
-      if (scene2Started) {
+      if (scene2Started && heartAnimationStarted) {
         buildAnimatedHeart();
         heartUI.classList.remove("show");
       }
